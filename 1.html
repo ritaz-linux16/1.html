@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowDiary | Anonymous Spaces</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-glow: #6366f1;
+            
+            /* Category Colors */
+            --love: #f43f5e;
+            --family: #38bdf8;
+            --thoughts: #a855f7;
+            --friends: #f59e0b;
+            --learn: #10b981;
+            --future: #ec4899;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            background: linear-gradient(to right, #a5b4fc, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            margin: 10px 0 0 0;
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Glassmorphism Editor Box */
+        .write-box {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            padding: 15px;
+            font-size: 1rem;
+            resize: none;
+            box-sizing: border-box;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--accent-glow);
+        }
+
+        .box-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        select {
+            background: #0f172a;
+            color: white;
+            border: 1px solid var(--glass-border);
+            padding: 10px 15px;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        /* Diary Cards */
+        .diary-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .anonymous-alias {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .badge {
+            font-size: 0.8rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .diary-body {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: #e2e8f0;
+            margin-bottom: 20px;
+            white-space: pre-wrap; /* Remembers line breaks */
+        }
+
+        /* Feedback/Comments Style */
+        .interaction-area {
+            border-top: 1px solid var(--glass-border);
+            padding-top: 20px;
+        }
+
+        .feedback-list {
+            margin-bottom: 15px;
+        }
+
+        .feedback-item {
+            background: rgba(0, 0, 0, 0.15);
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            border-left: 4px solid var(--accent-glow);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-type {
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .type-advice { color: #38bdf8; border-color: #38bdf8; }
+        .type-complement { color: #f59e0b; border-color: #f59e0b; }
+        .type-comment { color: #a855f7; border-color: #a855f7; }
+
+        .reply-box {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .reply-input {
+            flex: 1;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 12px;
+            color: white;
+            outline: none;
+        }
+
+        .reply-input:focus { border-color: var(--accent-glow); }
+
+        .reply-type-select {
+            background: #0f172a;
+            color: white;
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 0 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Incognito Journals</h1>
+        <p>No identities. Just raw human thoughts, advice, and empathy.</p>
+    </header>
+
+    <div class="container">
+        <div class="write-box">
+            <textarea id="diaryInput" placeholder="Write what you can't tell anyone out loud..."></textarea>
+            <div class="box-footer">
+                <select id="categoryInput">
+                    <option value="Thoughts" selected>Thoughts</option>
+                    <option value="Love Story">Love Story</option>
+                    <option value="Family">Family</option>
+                    <option value="Friends Issue">Friends Issue</option>
+                    <option value="Learn">Learn</option>
+                    <option value="Future Thinking">Future Thinking</option>
+                </select>
+                <button class="btn-primary" onclick="createNewPost()">Post Anonymously</button>
+            </div>
+        </div>
+
+        <div id="diaryFeed">
+            
+            <div class="diary-card">
+                <div class="card-meta">
+                    <span class="anonymous-alias">👤 Someone deep in thought...</span>
+                    <span class="badge" style="color: #f43f5e; border-color: #f43f5e;">Love Story</span>
+                </div>
+                <div class="diary-body">
+                    I'm scared that if I confess my feelings, it will ruin everything we've built over 5 years. But watching them date other people is slowly breaking my heart. How do I stop loving someone without losing them?
+                </div>
+                
+                <div class="interaction-area">
+                    <div class="feedback-list">
+                        <div class="feedback-item" style="border-left-color: #38bdf8;">
+                            <span class="feedback-type type-advice">💡 Advice</span>
+                            You are already losing them by staying silent while your heart breaks. Take the leap. True friendship can survive honesty.
+                        </div>
+                    </div>
+
+                    <div class="reply-box">
+                        <select class="reply-type-select">
+                            <option value="Advice">Advice</option>
+                            <option value="Complement">Complement</option>
+                            <option value="Comment">Comment</option>
+                        </select>
+                        <input type="text" class="reply-input" placeholder="Leave your feedback...">
+                        <button class="btn-primary" style="padding: 10px 18px;" onclick="addComment(this)">Reply</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Function to create a brand new journal post
+        function createNewPost() {
+            const content = document.getElementById('diaryInput').value.trim();
+            const category = document.getElementById('categoryInput').value;
+
+            if (content === "") {
+                alert("Please write something before posting!");
+                return;
+            }
+
+            // Create a brand new diary card HTML element
+            const feed = document.getElementById('diaryFeed');
+            const newCard = document.createElement('div');
+            newCard.className = 'diary-card';
+
+            newCard.innerHTML = `
+                <div class="card-meta">
+                    <span class="anonymous-alias">👤 Anonymous Soul</span>
+                    <span class="badge">${category}</span>
+                </div>
+                <div class="diary-body">${content}</div>
+                
+                <div class="interaction-area">
+                    <div class="feedback-list"></div>
+
+                    <div class="reply-box">
+                        <select class="reply-type-select">
+                            <option value="Advice">Advice</option>
+                            <option value="Complement">Complement</option>
+                            <option value="Comment">Comment</option>
+                        </select>
+                        <input type="text" class="reply-input" placeholder="Leave your feedback...">
+                        <button class="btn-primary" style="padding: 10px 18px;" onclick="addComment(this)">Reply</button>
+                    </div>
+                </div>
+            `;
+
+            // Add the new card to the very top of the feed
+            feed.insertBefore(newCard, feed.firstChild);
+
+            // Clear the textarea after posting
+            document.getElementById('diaryInput').value = "";
+        }
+
+        // Function to append a reply/comment to a specific card
+        function addComment(buttonElement) {
+            // Find the reply elements related to the clicked button
+            const replyBox = buttonElement.parentElement;
+            const textInput = replyBox.querySelector('.reply-input');
+            const typeSelect = replyBox.querySelector('.reply-type-select');
+            
+            const commentText = textInput.value.trim();
+            const commentType = typeSelect.value;
+
+            if (commentText === "") {
+                alert("Please type a comment before replying!");
+                return;
+            }
+
+            // Find the list where comments live inside this specific card
+            const interactionArea = replyBox.parentElement;
+            const feedbackList = interactionArea.querySelector('.feedback-list');
+
+            // Pick color indicators based on the comment type
+            let typeClass = 'type-comment';
+            let icon = '💬';
+            if (commentType === 'Advice') { typeClass = 'type-advice'; icon = '💡'; }
+            if (commentType === 'Complement') { typeClass = 'type-complement'; icon = '🌸'; }
+
+            // Create the comment HTML template
+            const newComment = document.createElement('div');
+            newComment.className = 'feedback-item';
+            newComment.innerHTML = `
+                <span class="feedback-type ${typeClass}">${icon} ${commentType}</span>
+                ${commentText}
+            `;
+
+            // Append the comment to the list
+            feedbackList.appendChild(newComment);
+
+            // Clear the comment input box
+            textInput.value = "";
+        }
+    </script>
+</body>
+</html>
