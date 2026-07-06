@@ -61,34 +61,49 @@
             padding: 0 20px;
         }
 
-        /* Glassmorphism Editor Box */
-        .write-box {
+        /* Shared: Glassmorphism Panel */
+        .glass-panel {
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
             padding: 25px;
+        }
+
+        .write-box {
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             margin-bottom: 40px;
+        }
+
+        /* Shared: Dark Input Base */
+        .dark-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            color: white;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .dark-input:focus {
+            border-color: var(--accent-glow);
+        }
+
+        /* Shared: Dark Select Base */
+        .dark-select {
+            background: #0f172a;
+            color: white;
+            border: 1px solid var(--glass-border);
+            outline: none;
         }
 
         textarea {
             width: 100%;
             height: 120px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--glass-border);
             border-radius: 12px;
-            color: white;
             padding: 15px;
             font-size: 1rem;
             resize: none;
             box-sizing: border-box;
-            outline: none;
-            transition: border 0.3s;
-        }
-
-        textarea:focus {
-            border-color: var(--accent-glow);
         }
 
         .box-footer {
@@ -99,12 +114,8 @@
         }
 
         select {
-            background: #0f172a;
-            color: white;
-            border: 1px solid var(--glass-border);
             padding: 10px 15px;
             border-radius: 10px;
-            outline: none;
         }
 
         .btn-primary {
@@ -124,11 +135,6 @@
 
         /* Diary Cards */
         .diary-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 25px;
             margin-bottom: 25px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             animation: fadeIn 0.5s ease;
@@ -166,7 +172,7 @@
             line-height: 1.7;
             color: #e2e8f0;
             margin-bottom: 20px;
-            white-space: pre-wrap; /* Remembers line breaks */
+            white-space: pre-wrap;
         }
 
         /* Feedback/Comments Style */
@@ -210,20 +216,11 @@
 
         .reply-input {
             flex: 1;
-            background: rgba(0,0,0,0.2);
-            border: 1px solid var(--glass-border);
             border-radius: 10px;
             padding: 12px;
-            color: white;
-            outline: none;
         }
 
-        .reply-input:focus { border-color: var(--accent-glow); }
-
         .reply-type-select {
-            background: #0f172a;
-            color: white;
-            border: 1px solid var(--glass-border);
             border-radius: 10px;
             padding: 0 10px;
         }
@@ -237,10 +234,10 @@
     </header>
 
     <div class="container">
-        <div class="write-box">
-            <textarea id="diaryInput" placeholder="Write what you can't tell anyone out loud..."></textarea>
+        <div class="write-box glass-panel">
+            <textarea id="diaryInput" class="dark-input" placeholder="Write what you can't tell anyone out loud..."></textarea>
             <div class="box-footer">
-                <select id="categoryInput">
+                <select id="categoryInput" class="dark-select">
                     <option value="Thoughts" selected>Thoughts</option>
                     <option value="Love Story">Love Story</option>
                     <option value="Family">Family</option>
@@ -252,88 +249,128 @@
             </div>
         </div>
 
-        <div id="diaryFeed">
-            
-            <div class="diary-card">
-                <div class="card-meta">
-                    <span class="anonymous-alias">👤 Someone deep in thought...</span>
-                    <span class="badge" style="color: #f43f5e; border-color: #f43f5e;">Love Story</span>
-                </div>
-                <div class="diary-body">
-                    I'm scared that if I confess my feelings, it will ruin everything we've built over 5 years. But watching them date other people is slowly breaking my heart. How do I stop loving someone without losing them?
-                </div>
-                
-                <div class="interaction-area">
-                    <div class="feedback-list">
-                        <div class="feedback-item" style="border-left-color: #38bdf8;">
-                            <span class="feedback-type type-advice">💡 Advice</span>
-                            You are already losing them by staying silent while your heart breaks. Take the leap. True friendship can survive honesty.
-                        </div>
-                    </div>
-
-                    <div class="reply-box">
-                        <select class="reply-type-select">
-                            <option value="Advice">Advice</option>
-                            <option value="Complement">Complement</option>
-                            <option value="Comment">Comment</option>
-                        </select>
-                        <input type="text" class="reply-input" placeholder="Leave your feedback...">
-                        <button class="btn-primary" style="padding: 10px 18px;" onclick="addComment(this)">Reply</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+        <div id="diaryFeed"></div>
     </div>
 
     <script>
-        // Function to create a brand new journal post
-        function createNewPost() {
-            const content = document.getElementById('diaryInput').value.trim();
-            const category = document.getElementById('categoryInput').value;
+        // ─── Shared Utilities ───────────────────────────────────────────
 
-            if (content === "") {
-                alert("Please write something before posting!");
-                return;
+        // Feedback type configuration: maps type names to their display properties
+        const FEEDBACK_TYPES = {
+            Advice:     { cssClass: 'type-advice',     icon: '💡' },
+            Complement: { cssClass: 'type-complement', icon: '🌸' },
+            Comment:    { cssClass: 'type-comment',    icon: '💬' }
+        };
+
+        // Validates that an input string is non-empty; shows alert and returns false if empty
+        function validateNonEmpty(value, message) {
+            if (value.trim() === "") {
+                alert(message);
+                return false;
             }
-
-            // Create a brand new diary card HTML element
-            const feed = document.getElementById('diaryFeed');
-            const newCard = document.createElement('div');
-            newCard.className = 'diary-card';
-
-            newCard.innerHTML = `
-                <div class="card-meta">
-                    <span class="anonymous-alias">👤 Anonymous Soul</span>
-                    <span class="badge">${category}</span>
-                </div>
-                <div class="diary-body">${content}</div>
-                
-                <div class="interaction-area">
-                    <div class="feedback-list"></div>
-
-                    <div class="reply-box">
-                        <select class="reply-type-select">
-                            <option value="Advice">Advice</option>
-                            <option value="Complement">Complement</option>
-                            <option value="Comment">Comment</option>
-                        </select>
-                        <input type="text" class="reply-input" placeholder="Leave your feedback...">
-                        <button class="btn-primary" style="padding: 10px 18px;" onclick="addComment(this)">Reply</button>
-                    </div>
-                </div>
-            `;
-
-            // Add the new card to the very top of the feed
-            feed.insertBefore(newCard, feed.firstChild);
-
-            // Clear the textarea after posting
-            document.getElementById('diaryInput').value = "";
+            return true;
         }
 
-        // Function to append a reply/comment to a specific card
+        // Builds the reply box HTML used inside every diary card
+        function buildReplyBoxHTML() {
+            return `
+                <div class="reply-box">
+                    <select class="reply-type-select dark-select">
+                        ${Object.keys(FEEDBACK_TYPES).map(type =>
+                            `<option value="${type}">${type}</option>`
+                        ).join('')}
+                    </select>
+                    <input type="text" class="reply-input dark-input" placeholder="Leave your feedback...">
+                    <button class="btn-primary" style="padding: 10px 18px;" onclick="addComment(this)">Reply</button>
+                </div>`;
+        }
+
+        // Builds a single feedback item HTML element
+        function buildFeedbackItemHTML(type, text) {
+            const { cssClass, icon } = FEEDBACK_TYPES[type] || FEEDBACK_TYPES.Comment;
+            return `
+                <div class="feedback-item">
+                    <span class="feedback-type ${cssClass}">${icon} ${type}</span>
+                    ${text}
+                </div>`;
+        }
+
+        // Builds a complete diary card HTML structure
+        function buildDiaryCardHTML(alias, category, body, feedbackItems) {
+            const feedbackHTML = feedbackItems
+                .map(item => buildFeedbackItemHTML(item.type, item.text))
+                .join('');
+
+            return `
+                <div class="card-meta">
+                    <span class="anonymous-alias">👤 ${alias}</span>
+                    <span class="badge">${category}</span>
+                </div>
+                <div class="diary-body">${body}</div>
+                <div class="interaction-area">
+                    <div class="feedback-list">${feedbackHTML}</div>
+                    ${buildReplyBoxHTML()}
+                </div>`;
+        }
+
+        // ─── Application Logic ──────────────────────────────────────────
+
+        // Renders the initial seed data on page load
+        function renderSeedPosts() {
+            const seedData = [
+                {
+                    alias: 'Someone deep in thought...',
+                    category: 'Love Story',
+                    categoryColor: '#f43f5e',
+                    body: "I'm scared that if I confess my feelings, it will ruin everything we've built over 5 years. But watching them date other people is slowly breaking my heart. How do I stop loving someone without losing them?",
+                    feedback: [
+                        { type: 'Advice', text: 'You are already losing them by staying silent while your heart breaks. Take the leap. True friendship can survive honesty.' }
+                    ]
+                }
+            ];
+
+            const feed = document.getElementById('diaryFeed');
+            seedData.forEach(post => {
+                const card = document.createElement('div');
+                card.className = 'diary-card glass-panel';
+                card.innerHTML = buildDiaryCardHTML(post.alias, post.category, post.body, post.feedback);
+
+                // Apply category color to the badge
+                const badge = card.querySelector('.badge');
+                badge.style.color = post.categoryColor;
+                badge.style.borderColor = post.categoryColor;
+
+                // Apply border color to seed feedback items
+                post.feedback.forEach((item, i) => {
+                    const feedbackEl = card.querySelectorAll('.feedback-item')[i];
+                    const { cssClass } = FEEDBACK_TYPES[item.type] || FEEDBACK_TYPES.Comment;
+                    if (cssClass === 'type-advice') feedbackEl.style.borderLeftColor = '#38bdf8';
+                    else if (cssClass === 'type-complement') feedbackEl.style.borderLeftColor = '#f59e0b';
+                });
+
+                feed.appendChild(card);
+            });
+        }
+
+        // Creates a new anonymous journal post from user input
+        function createNewPost() {
+            const input = document.getElementById('diaryInput');
+            const content = input.value.trim();
+            const category = document.getElementById('categoryInput').value;
+
+            if (!validateNonEmpty(content, "Please write something before posting!")) return;
+
+            const feed = document.getElementById('diaryFeed');
+            const newCard = document.createElement('div');
+            newCard.className = 'diary-card glass-panel';
+            newCard.innerHTML = buildDiaryCardHTML('Anonymous Soul', category, content, []);
+
+            feed.insertBefore(newCard, feed.firstChild);
+            input.value = "";
+        }
+
+        // Appends a reply/comment to a specific diary card
         function addComment(buttonElement) {
-            // Find the reply elements related to the clicked button
             const replyBox = buttonElement.parentElement;
             const textInput = replyBox.querySelector('.reply-input');
             const typeSelect = replyBox.querySelector('.reply-type-select');
@@ -341,35 +378,17 @@
             const commentText = textInput.value.trim();
             const commentType = typeSelect.value;
 
-            if (commentText === "") {
-                alert("Please type a comment before replying!");
-                return;
-            }
+            if (!validateNonEmpty(commentText, "Please type a comment before replying!")) return;
 
-            // Find the list where comments live inside this specific card
             const interactionArea = replyBox.parentElement;
             const feedbackList = interactionArea.querySelector('.feedback-list');
 
-            // Pick color indicators based on the comment type
-            let typeClass = 'type-comment';
-            let icon = '💬';
-            if (commentType === 'Advice') { typeClass = 'type-advice'; icon = '💡'; }
-            if (commentType === 'Complement') { typeClass = 'type-complement'; icon = '🌸'; }
-
-            // Create the comment HTML template
-            const newComment = document.createElement('div');
-            newComment.className = 'feedback-item';
-            newComment.innerHTML = `
-                <span class="feedback-type ${typeClass}">${icon} ${commentType}</span>
-                ${commentText}
-            `;
-
-            // Append the comment to the list
-            feedbackList.appendChild(newComment);
-
-            // Clear the comment input box
+            feedbackList.insertAdjacentHTML('beforeend', buildFeedbackItemHTML(commentType, commentText));
             textInput.value = "";
         }
+
+        // Initialize the page with seed content
+        renderSeedPosts();
     </script>
 </body>
 </html>
