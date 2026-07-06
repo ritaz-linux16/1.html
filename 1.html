@@ -302,12 +302,13 @@
             const newCard = document.createElement('div');
             newCard.className = 'diary-card';
 
+            // Build the static card structure without any user-supplied data.
             newCard.innerHTML = `
                 <div class="card-meta">
                     <span class="anonymous-alias">👤 Anonymous Soul</span>
-                    <span class="badge">${category}</span>
+                    <span class="badge"></span>
                 </div>
-                <div class="diary-body">${content}</div>
+                <div class="diary-body"></div>
                 
                 <div class="interaction-area">
                     <div class="feedback-list"></div>
@@ -323,6 +324,10 @@
                     </div>
                 </div>
             `;
+
+            // Insert user-controlled values as text to prevent HTML/script injection (XSS).
+            newCard.querySelector('.badge').textContent = category;
+            newCard.querySelector('.diary-body').textContent = content;
 
             // Add the new card to the very top of the feed
             feed.insertBefore(newCard, feed.firstChild);
@@ -356,13 +361,16 @@
             if (commentType === 'Advice') { typeClass = 'type-advice'; icon = '💡'; }
             if (commentType === 'Complement') { typeClass = 'type-complement'; icon = '🌸'; }
 
-            // Create the comment HTML template
+            // Create the comment element, inserting user text safely to prevent XSS.
             const newComment = document.createElement('div');
             newComment.className = 'feedback-item';
-            newComment.innerHTML = `
-                <span class="feedback-type ${typeClass}">${icon} ${commentType}</span>
-                ${commentText}
-            `;
+
+            const typeLabel = document.createElement('span');
+            typeLabel.className = `feedback-type ${typeClass}`;
+            typeLabel.textContent = `${icon} ${commentType}`;
+
+            newComment.appendChild(typeLabel);
+            newComment.appendChild(document.createTextNode(commentText));
 
             // Append the comment to the list
             feedbackList.appendChild(newComment);
